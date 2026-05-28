@@ -47,7 +47,7 @@ for side in [-1, 1]:
         color  = metal
     )
 
-gd = graph(
+g1 = graph(
     title  = "Angular velocity components",
     xtitle = "time  (s)",
     ytitle = "ω  (rad/s)",
@@ -60,10 +60,52 @@ gd = graph(
     fast   = True
 )
  
-curve_wx = gcurve(graph=gd, color=color.red,   label="ωx  (stable 1)")
-curve_wy = gcurve(graph=gd, color=color.green, label="ωy  (stable 2)")
-curve_wz = gcurve(graph=gd, color=color.cyan,  label="ωz  (intermediate)")
+curve_wx = gcurve(graph=g1, color=color.red,   label="ωx")
+curve_wy = gcurve(graph=g1, color=color.green, label="ωy")
+curve_wz = gcurve(graph=g1, color=color.cyan,  label="ωz")
  
 curve_wx.plot(0, 0)
 curve_wy.plot(0, 0)
 curve_wz.plot(0, 0)
+
+g2 = graph(
+    title  = "Euler angles",
+    xtitle = "time  (s)",
+    ytitle = "angle (rad)",
+    width  = 800,
+    height = 300,
+    background = color.black,
+    foreground = color.white,
+    xmin = 0,  xmax = 20,
+    ymin = -8, ymax = 8,
+    fast   = True
+)
+ 
+curve_alpha = gcurve(graph=g2, color=color.red,   label="alpha")
+curve_beta = gcurve(graph=g2, color=color.green, label="beta")
+curve_gamma = gcurve(graph=g2, color=color.cyan,  label="gamma")
+ 
+curve_alpha.plot(0, 0)
+curve_beta.plot(0, 0)
+curve_gamma.plot(0, 0)
+
+g3 = graph(
+    title  = "Moment of Inertia Components",
+    xtitle = "time  (s)",
+    ytitle = "moment of inertia (kg * m^2)",
+    width  = 800,
+    height = 300,
+    background = color.black,
+    foreground = color.white,
+    xmin = 0,  xmax = 20,
+    ymin = -8, ymax = 8,
+    fast   = True
+)
+ 
+curve_ix = gcurve(graph=g3, color=color.red,   label="Ix")
+curve_iy = gcurve(graph=g3, color=color.green, label="Iy")
+curve_iz = gcurve(graph=g3, color=color.cyan,  label="Iz")
+ 
+curve_ix.plot(0, 0)
+curve_iy.plot(0, 0)
+curve_iz.plot(0, 0)
