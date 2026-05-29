@@ -134,8 +134,7 @@ def rk4_omega(omega, dt):
     k3 = derivs(omega_k3)
     omega_k4 = [omega[j] + dt * k3[j] for j in range(3)]
     k4 = derivs(omega_k4)
-    return [omega[j] + (dt / 6.0) * (k1[j] + 2*k2[j] + 2*k3[j] + k4[j])
-            for j in range(3)]
+    return [omega[j] + (dt / 6.0) * (k1[j] + 2*k2[j] + 2*k3[j] + k4[j]) for j in range(3)]
  
  
 # Small ω1 perturbation seeds the instability; ω2 is the main spin
