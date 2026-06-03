@@ -78,8 +78,8 @@ g2 = graph(
     foreground = color.white,
     xmin       = 0,  
     xmax       = 20,
-    ymin       = -4, 
-    ymax       = 4,
+    ymin       = -6.5, 
+    ymax       = 6.5,
     scroll     = True,
     fast       = True
 )
@@ -180,9 +180,9 @@ def derivs(w, I):
 
 def update_euler_angles(euler_angles, w):
     roll, pitch, yaw = euler_angles[0], euler_angles[1], euler_angles[2]
-    roll  += (w.y * sin(roll) + w.z * cos(roll)) * tan(pitch) * dt
-    pitch += (w.y * cos(roll) - w.z * sin(roll)) * dt
-    yaw   += (w.y * sin(roll) - w.z * cos(roll)) / cos(pitch) * dt
+    roll  += (w.x * cos(yaw) / cos(pitch) - w.y * sin(yaw) / cos(pitch)) * dt
+    pitch += (w.x * sin(yaw) + w.y * cos(yaw)) * dt
+    yaw   += (-w.x * cos(yaw) * sin(pitch) / cos(pitch) + w.y * sin(pitch) * sin(yaw) / cos(pitch) + w.z) * dt
     
     return [roll, pitch, yaw]
 
@@ -221,32 +221,52 @@ def mat_mul_3x3(m1, m2): # we are using this only to multiply the rotation matri
     
     for i in range(3):
         for j in range(3):
-            res[i][j] = dot(vector(m1[i][0], m1[i][1], m1[i][2]), vector(m2[i][0], m2[i][1], m2[i][2]))
+            res[i][j] = dot(vector(m1[i][0], m1[i][1], m1[i][2]), vector(m2[j][0], m2[j][1], m2[j][2]))
     
     return res
+    
+def mat_mul(A, B):
+    rows = len(A)
+    cols = len(B[0])
+    result = [[0] * cols for i in range(rows)]
+    
+    for i in range(rows):
+        for j in range(cols):
+            for k in range(len(B)):
+                result[i][j] += A[i][k] * B[k][j]
+ 
+    return result
             
 def transform(euler_angles):
     roll, pitch, yaw = euler_angles[0], euler_angles[1], euler_angles[2]
     
-    Rx = [
-        [1, 0, 0],
-        [0, cos(roll), -sin(roll)],
-        [0, sin(roll), cos(roll)]
+    R = [
+        [cos(pitch) * cos(yaw), -cos(pitch) * sin(yaw), sin(pitch)],
+        [cos(roll) * sin(yaw) + cos(yaw) * sin(roll) * sin(pitch), cos(roll) * cos(yaw) - sin(roll) * sin(pitch) * sin(yaw), -cos(pitch) * sin(roll)],
+        [sin(roll) * sin(yaw) - cos(roll) * cos(yaw) * sin(pitch), cos(yaw) * sin(roll) + cos(roll) * sin(pitch) * sin(yaw), cos(roll) * cos(pitch)]
     ]
     
-    Ry = [
-        [cos(pitch), 0, sin(pitch)],
-        [0, 1, 0],
-        [-sin(pitch), 0, cos(pitch)]
-    ]
-        
-    Rz = [
-        [cos(yaw), -sin(yaw), 0],
-        [sin(yaw), cos(yaw), 0],
-        [0, 0, 1]
-    ]
-        
-    return mat_mul_3x3(mat_mul_3x3(Rx, Ry), Rz)
+    return R
+    
+#    Rx = [
+#        [1, 0, 0],
+#        [0, cos(roll), -sin(roll)],
+#        [0, sin(roll), cos(roll)]
+#    ]
+#    
+#    Ry = [
+#        [cos(pitch), 0, sin(pitch)],
+#        [0, 1, 0],
+#        [-sin(pitch), 0, cos(pitch)]
+#    ]
+#        
+#    Rz = [
+#        [cos(yaw), -sin(yaw), 0],
+#        [sin(yaw), cos(yaw), 0],
+#        [0, 0, 1]
+#    ]
+#        
+#    return mat_mul(mat_mul(Rx, Ry), Rz)
     
 '''
 Initial Conditions
@@ -278,8 +298,12 @@ while True:
     _euler_angles = update_euler_angles(_euler_angles, _w)
     
     # update wingnut orientation
-#    R = transform(_euler_angles)
-#    wingnut.axis *= transform(_euler_angles)
+    R = transform(_euler_angles)
+    wingnut.axis = vector(
+        dot(vector(R[0][0], R[0][1], R[0][2]), wingnut.axis),
+        dot(vector(R[1][0], R[1][1], R[1][2]), wingnut.axis),
+        dot(vector(R[2][0], R[2][1], R[2][2]), wingnut.axis)
+    )
     
     # we plot to graphs every 5 steps
     plot_counter += 1
@@ -293,9 +317,9 @@ while True:
         curve_yaw.plot(t, _euler_angles[2])
         
         L_body = vector(_I.x * _w.x, _I.y * _w.y, _I.z * _w.z)
-        Lx = dot(vector(R[0][0], R[0][1], R[0][2]), L_body.x)
-        Ly = dot(vector(R[1][0], R[1][1], R[1][2]), L_body.y)
-        Lz = dot(vector(R[2][0], R[2][1], R[2][2]), L_body.z)
+        Lx = dot(vector(R[0][0], R[0][1], R[0][2]), L_body)
+        Ly = dot(vector(R[1][0], R[1][1], R[1][2]), L_body)
+        Lz = dot(vector(R[2][0], R[2][1], R[2][2]), L_body)
         
         curve_Lx.plot(t, Lx)
         curve_Ly.plot(t, Ly)
