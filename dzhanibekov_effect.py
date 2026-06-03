@@ -110,6 +110,56 @@ curve_ix.plot(0, 0)
 curve_iy.plot(0, 0)
 curve_iz.plot(0, 0)
 
+I1 = 1.91e-4   # smallest     — stable spin axis
+I2 = 5.22e-4   # intermediate — UNSTABLE spin axis
+I3 = 6.31e-4   # largest      — stable spin axis
+
+principal_axes = [
+    [1.0, 0.0, 0.0],   # I1 → x-axis (red)
+    [0.0, 1.0, 0.0],   # I2 → y-axis (green)
+    [0.0, 0.0, 1.0]    # I3 → z-axis (cyan)
+]
+
+scene.append_to_caption("   ")                      # spacer
+btn_axes = button(text="Show Principal Axes", bind=toggle_axes)
+scene.append_to_caption("\n\n")
+
+axis_colors = [color.red, color.green, color.cyan]
+axis_labels  = ["I1", "I2", "I3"]
+axis_scale   = 2.5   # display length (m) — tune to taste
+
+principal_arrows = []
+
+def draw_principal_axes():
+    global principal_arrows
+    # Remove old arrows if they exist
+    for arr in principal_arrows:
+        arr.visible = False
+    principal_arrows = []
+
+    for k in range(3):
+        ev = principal_axes[k]
+        arr = arrow(
+            pos    = vector(0, 0, 0),
+            axis   = vector(ev[0], ev[1], ev[2]) * axis_scale,
+            color  = axis_colors[k],
+            shaftwidth = 0.06,
+            headwidth  = 0.14,
+            headlength = 0.18,
+            visible    = False          # hidden until user clicks Show
+        )
+        principal_arrows.append(arr)
+
+
+axes_visible = False
+
+def toggle_axes(b):
+    global axes_visible
+    axes_visible = not axes_visible
+    for arr in principal_arrows:
+        arr.visible = axes_visible
+    b.text = "Hide Principal Axes" if axes_visible else "Show Principal Axes"
+
 def euler_angles(euler_angles, omega)
     alpha, beta, gamma = euler_angles[0], euler_angles[1], euler_angles[2]
     w1, w2, w3 = omega[0], omega[1], omega[2]
