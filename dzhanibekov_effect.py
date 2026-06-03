@@ -192,3 +192,50 @@ def transform(euler_angles)
         ])
         
     return Rx @ Ry @ Rz
+
+omega        = [0.01, 5.0, 0.0]
+q            = [1.0, 0.0, 0.0, 0.0]
+
+dt           = 0.001
+t            = 0.0
+plot_counter = 0
+
+draw_principal_axes()
+
+while True:
+    rate(1000)
+
+    if not running:
+        continue
+
+    # Evolve angular velocity (body frame)
+    
+
+    # Evolve euler angles
+    euler_angles = euler_angles(euler_angles)
+
+    # Apply orientation to the compound object
+    wingnut.axis = transform(euler_angles) * wingnut.axis
+    # wingnut.up   = vector(R[0][1], R[1][1], R[2][1])
+
+    # Plot to graphs every 5 steps
+    plot_counter += 1
+    if plot_counter % 5 == 0:
+        Lb = [I1*omega[0], I2*omega[1], I3*omega[2]]
+        Lx = R[0][0]*Lb[0] + R[0][1]*Lb[1] + R[0][2]*Lb[2]
+        Ly = R[1][0]*Lb[0] + R[1][1]*Lb[1] + R[1][2]*Lb[2]
+        Lz = R[2][0]*Lb[0] + R[2][1]*Lb[1] + R[2][2]*Lb[2]
+
+        curve_wx.plot(t, omega[0])
+        curve_wy.plot(t, omega[1])
+        curve_wz.plot(t, omega[2])
+
+        curve_alpha.plot(t, euler_angles[0])
+        curve_beta.plot(t,  euler_angles[1])
+        curve_gamma.plot(t, euler_angles[2])
+
+        curve_Lx.plot(t, Lx)
+        curve_Ly.plot(t, Ly)
+        curve_Lz.plot(t, Lz)
+
+    t += dt
