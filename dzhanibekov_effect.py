@@ -109,3 +109,36 @@ curve_iz = gcurve(graph=g3, color=color.cyan,  label="Iz")
 curve_ix.plot(0, 0)
 curve_iy.plot(0, 0)
 curve_iz.plot(0, 0)
+
+def euler_angles(euler_angles, omega)
+    alpha, beta, gamma = euler_angles[0], euler_angles[1], euler_angles[2]
+    w1, w2, w3 = omega[0], omega[1], omega[2]
+    
+    beta = alpha + (w1 * np.sin(gamma) + w2 * np.cos(gamma))/np.sin(beta) * dt
+    beta = beta + (w1 * np.cos(gamma) - w2 * np.sin(gamma)) * dt
+    gamma = gamma + (w3 - (w1 * np.sin(gamma) + w2 * np.cos(gamma))/np.sin(beta) * np.cos(beta)) * dt
+    
+    return [alpha, beta, gamma]
+    
+def transform(euler_angles)
+    alpha, beta, gamma = euler_angles[0], euler_angles[1], euler_angles[2]
+    
+    Rx = np.array([
+        [1, 0, 0],
+        [0, np.cos(alpha), -np.sin(alpha)],
+        [0, np.sin(alpha), np.cos(alpha)]
+        ])
+    
+    Ry = np.array([
+        [np.cos(beta), 0, np.sin(beta)],
+        [0, 1, 0],
+        [-np.sin(beta), 0, np.cos(beta)]
+        ])
+        
+    Rz = np.array([
+        [np.cos(gamma), -np.sin(gamma), 0],
+        [np.sin(gamma), np.cos(gamma), 0],
+        [0, 0, 1]
+        ])
+        
+    return Rx @ Ry @ Rz
