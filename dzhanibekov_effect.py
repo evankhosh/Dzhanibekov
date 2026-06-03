@@ -1,4 +1,5 @@
 Web VPython 3.2
+import numpy as np
 
 scene.title = "Wing Nut"
 scene.width = 800
@@ -10,42 +11,39 @@ scene.camera.axis = vector(-3, -2.5, -5)
 metal = vector(0.72, 0.72, 0.75)
 dark  = vector(0.20, 0.20, 0.22)
 
-# Central cylindrical body 
-cylinder(
-    pos    = vector(0, -0.3, 0),
-    axis   = vector(0, 3, 0),
+# ── Build geometry and collect parts into a compound ──────────────────────────
+
+parts = []
+
+# Central cylindrical body
+parts.append(cylinder(
+    pos    = vector(0, 0, 0),
+    axis   = vector(0, -3, 0),
     radius = 0.55,
     color  = metal
-)
-
-# Threaded hole through center
-cylinder(
-    pos    = vector(0, -0.31, 0),
-    axis   = vector(0, 0.62, 0),
-    radius = 0.22,
-    color  = dark
-)
+))
 
 # Two wings
 for side in [-1, 1]:
-    # Main wing slab
-    box(
-        pos   = vector(side * 1.05, 0, 0),
-        size  = vector(1.0, 0.55, 0.30),
-        color = metal
-    )
-    # Narrow tip slab
-    box(
-        pos   = vector(side * 1.62, 0, 0),
-        size  = vector(0.22, 0.50, 0.22),
-        color = metal
-    )
-    # Rounded tip
-    sphere(
-        pos    = vector(side * 1.74, 0, 0),
-        radius = 0.13,
+    parts.append(cylinder(
+        pos    = vector(0, 0, 0),
+        axis   = vector(side*2.5, 0, 0),
+        radius = 0.6,
         color  = metal
-    )
+    ))
+
+# Group all parts — origin becomes the centre of mass (temporary)
+wingnut = compound(parts, pos=vector(0, 0, 0))
+
+running = False
+
+def toggle(b):
+    global running
+    running = not running
+    b.text = "Stop" if running else "Start"
+
+scene.append_to_caption("\n")
+btn = button(text="Start", bind=toggle)
 
 g1 = graph(
     title  = "Angular velocity components",
