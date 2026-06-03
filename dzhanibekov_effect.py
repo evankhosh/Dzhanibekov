@@ -1,39 +1,11 @@
 Web VPython 3.2
-import numpy as np
 
-scene.title = "Wing Nut"
+scene.title = "Dzhanibekov Effect"
 scene.width = 800
 scene.height = 600
 scene.background = color.black
-scene.camera.pos = vector(3, 2.5, 5)
-scene.camera.axis = vector(-3, -2.5, -5)
 
 metal = vector(0.72, 0.72, 0.75)
-dark  = vector(0.20, 0.20, 0.22)
-
-# ── Build geometry and collect parts into a compound ──────────────────────────
-
-parts = []
-
-# Central cylindrical body
-parts.append(cylinder(
-    pos    = vector(0, 0, 0),
-    axis   = vector(0, -3, 0),
-    radius = 0.55,
-    color  = metal
-))
-
-# Two wings
-for side in [-1, 1]:
-    parts.append(cylinder(
-        pos    = vector(0, 0, 0),
-        axis   = vector(side*2.5, 0, 0),
-        radius = 0.6,
-        color  = metal
-    ))
-
-# Group all parts — origin becomes the centre of mass (temporary)
-wingnut = compound(parts, pos=vector(0, 0, 0))
 
 running = False
 
@@ -45,89 +17,123 @@ def toggle(b):
 scene.append_to_caption("\n")
 btn = button(text="Start", bind=toggle)
 
+'''
+Wingnut Geomtry
+'''
+
+parts = []
+
+parts.append(cylinder(
+    pos    = vector(0, -.5, 0),
+    axis   = vector(0, 3, 0),
+    radius = 0.5,
+    color = metal
+))
+
+parts.append(cylinder(
+    pos    = vector(-2.5, -.5, 0),
+    axis   = vector(5, 0, 0),
+    radius = 0.75,
+    color = metal
+))
+
+wingnut = compound(parts, pos=vector(0, 0, 0))
+
+
+'''
+Graphs
+'''
+
 g1 = graph(
-    title  = "Angular velocity components",
-    xtitle = "time  (s)",
-    ytitle = "ω  (rad/s)",
-    width  = 800,
-    height = 300,
+    title      = "Angular velocity components",
+    xtitle     = "time  (s)",
+    ytitle     = "ω  (rad/s)",
+    width      = 800,
+    height     = 300,
     background = color.black,
     foreground = color.white,
-    xmin = 0,  xmax = 20,
-    ymin = -8, ymax = 8,
-    Scroll = True,
-    fast   = True
+    xmin       = 0,  
+    xmax       = 20,
+    ymin       = -8, 
+    ymax       = 8,
+    scroll     = True,
+    fast       = True
 )
- 
+
 curve_wx = gcurve(graph=g1, color=color.red,   label="ω1")
 curve_wy = gcurve(graph=g1, color=color.green, label="ω2")
 curve_wz = gcurve(graph=g1, color=color.cyan,  label="ω3")
- 
+
 curve_wx.plot(0, 0)
 curve_wy.plot(0, 0)
 curve_wz.plot(0, 0)
 
 g2 = graph(
-    title  = "Euler angles",
-    xtitle = "time  (s)",
-    ytitle = "angle (rad)",
-    width  = 800,
-    height = 300,
+    title      = "Euler angles",
+    xtitle     = "time (s)",
+    ytitle     = "angle (rad)",
+    width      = 800,
+    height     = 300,
     background = color.black,
     foreground = color.white,
-    xmin = 0,  xmax = 20,
-    ymin = -4, ymax = 4,
-    Scroll = True,
-    fast   = True
+    xmin       = 0,  
+    xmax       = 20,
+    ymin       = -4, 
+    ymax       = 4,
+    scroll     = True,
+    fast       = True
 )
- 
-curve_alpha = gcurve(graph=g2, color=color.red,   label="alpha (yaw)")
-curve_beta = gcurve(graph=g2, color=color.green, label="beta (pitch)")
-curve_gamma = gcurve(graph=g2, color=color.cyan,  label="gamma (roll)")
- 
-curve_alpha.plot(0, 0)
-curve_beta.plot(0, 0)
-curve_gamma.plot(0, 0)
+
+curve_yaw = gcurve(graph=g2, color=color.green,   label="yaw")
+curve_pitch  = gcurve(graph=g2, color=color.red, label="pitch")
+curve_roll = gcurve(graph=g2, color=color.cyan,  label="roll")
+
+curve_yaw.plot(0, 0)
+curve_pitch.plot(0, 0)
+curve_roll.plot(0, 0)
+
 
 g3 = graph(
-    title  = "Angular Momentum Components",
-    xtitle = "time  (s)",
-    ytitle = "L (kg*m^2/s)",
-    width  = 800,
-    height = 300,
+    title      = "Angular Momentum Components",
+    xtitle     = "time (s)",
+    ytitle     = "L (kg*m^2/s)",
+    width      = 800,
+    height     = 300,
     background = color.black,
     foreground = color.white,
-    xmin = 0,  xmax = 20,
-    ymin = -0.005, ymax = 0.005,
-    scroll = True,
-    fast   = True
+    xmin       = 0,      
+    xmax       = 20,
+    ymin       = -0.005, 
+    ymax       = 0.005,
+    scroll     = True,
+    fast       = True
 )
- 
+
 curve_Lx = gcurve(graph=g3, color=color.red,   label="Lx")
 curve_Ly = gcurve(graph=g3, color=color.green, label="Ly")
 curve_Lz = gcurve(graph=g3, color=color.cyan,  label="Lz")
- 
-curve_ix.plot(0, 0)
-curve_iy.plot(0, 0)
-curve_iz.plot(0, 0)
 
-I1 = 1.91e-4   # smallest     — stable spin axis
-I2 = 5.22e-4   # intermediate — UNSTABLE spin axis
-I3 = 6.31e-4   # largest      — stable spin axis
+curve_Lx.plot(0, 0)
+curve_Ly.plot(0, 0)
+curve_Lz.plot(0, 0)
 
+
+'''
+Principle Axis Arrows
+'''
+
+# Principal axes aligned with the body x, y, z axes respectively
 principal_axes = [
-    [1.0, 0.0, 0.0],   # I1 → x-axis (red)
-    [0.0, 1.0, 0.0],   # I2 → y-axis (green)
-    [0.0, 0.0, 1.0]    # I3 → z-axis (cyan)
+    vector(1, 0, 0),   # x-axis (red)
+    vector(0, 1, 0),   # y-axis (green)
+    vector(0, 0, 1)    # z-axis (cyan)
 ]
-
-scene.append_to_caption("   ")                      # spacer
+scene.append_to_caption("   ")
 btn_axes = button(text="Show Principal Axes", bind=toggle_axes)
 scene.append_to_caption("\n\n")
 
 axis_colors = [color.red, color.green, color.cyan]
-axis_labels  = ["I1", "I2", "I3"]
-axis_scale   = 2.5   # display length (m) — tune to taste
+axis_scale   = 2.5  
 
 principal_arrows = []
 
@@ -142,7 +148,7 @@ def draw_principal_axes():
         ev = principal_axes[k]
         arr = arrow(
             pos    = vector(0, 0, 0),
-            axis   = vector(ev[0], ev[1], ev[2]) * axis_scale,
+            axis   = ev * axis_scale,
             color  = axis_colors[k],
             shaftwidth = 0.06,
             headwidth  = 0.14,
@@ -160,83 +166,139 @@ def toggle_axes(b):
     for arr in principal_arrows:
         arr.visible = axes_visible
     b.text = "Hide Principal Axes" if axes_visible else "Show Principal Axes"
+    
+'''
+Physics Engine
+'''
 
-def euler_angles(euler_angles, omega)
-    alpha, beta, gamma = euler_angles[0], euler_angles[1], euler_angles[2]
-    w1, w2, w3 = omega[0], omega[1], omega[2]
+def derivs(w, I):
+    dw1 = (I.y - I.z) / I.x * w.z * w.y
+    dw2 = (I.z - I.x) / I.y * w.z * w.x
+    dw3 = (I.x - I.y) / I.z * w.y * w.x
     
-    beta = alpha + (w1 * np.sin(gamma) + w2 * np.cos(gamma))/np.sin(beta) * dt
-    beta = beta + (w1 * np.cos(gamma) - w2 * np.sin(gamma)) * dt
-    gamma = gamma + (w3 - (w1 * np.sin(gamma) + w2 * np.cos(gamma))/np.sin(beta) * np.cos(beta)) * dt
+    return vector(dw1, dw2, dw3)
+
+def update_euler_angles(euler_angles, w):
+    roll, pitch, yaw = euler_angles[0], euler_angles[1], euler_angles[2]
+    roll  += (w.y * sin(roll) + w.z * cos(roll)) * tan(pitch) * dt
+    pitch += (w.y * cos(roll) - w.z * sin(roll)) * dt
+    yaw   += (w.y * sin(roll) - w.z * cos(roll)) / cos(pitch) * dt
     
-    return [alpha, beta, gamma]
+    return [roll, pitch, yaw]
+
+def rot_90_cw(m): # helper for mat_mul_3x3()
+    # copy m to res
+    res = [
+        [0, 0, 0],
+        [0, 0, 0],
+        [0, 0, 0]
+    ]
+    for i in range(3):
+        for j in range(3):
+            res[i][j] = m[i][j]
+            
+    # transpose
+    for i in range(3):
+        for j in range(3):
+            res[i][j] = m[j][i]
     
-def transform(euler_angles)
-    alpha, beta, gamma = euler_angles[0], euler_angles[1], euler_angles[2]
+    # reflect
+    for i in range(3):
+        temp = res[i][0]
+        res[i][0] = res[i][2]
+        res[i][2] = temp
     
-    Rx = np.array([
+    return res
+    
+def mat_mul_3x3(m1, m2): # we are using this only to multiply the rotation matrices
+    res = [
+        [0, 0, 0],
+        [0, 0, 0],
+        [0, 0, 0]
+    ]
+    
+    m2 = rot_90_cw(m2)
+    
+    for i in range(3):
+        for j in range(3):
+            res[i][j] = dot(vector(m1[i][0], m1[i][1], m1[i][2]), vector(m2[i][0], m2[i][1], m2[i][2]))
+    
+    return res
+            
+def transform(euler_angles):
+    roll, pitch, yaw = euler_angles[0], euler_angles[1], euler_angles[2]
+    
+    Rx = [
         [1, 0, 0],
-        [0, np.cos(alpha), -np.sin(alpha)],
-        [0, np.sin(alpha), np.cos(alpha)]
-        ])
+        [0, cos(roll), -sin(roll)],
+        [0, sin(roll), cos(roll)]
+    ]
     
-    Ry = np.array([
-        [np.cos(beta), 0, np.sin(beta)],
+    Ry = [
+        [cos(pitch), 0, sin(pitch)],
         [0, 1, 0],
-        [-np.sin(beta), 0, np.cos(beta)]
-        ])
+        [-sin(pitch), 0, cos(pitch)]
+    ]
         
-    Rz = np.array([
-        [np.cos(gamma), -np.sin(gamma), 0],
-        [np.sin(gamma), np.cos(gamma), 0],
+    Rz = [
+        [cos(yaw), -sin(yaw), 0],
+        [sin(yaw), cos(yaw), 0],
         [0, 0, 1]
-        ])
+    ]
         
-    return Rx @ Ry @ Rz
+    return mat_mul_3x3(mat_mul_3x3(Rx, Ry), Rz)
+    
+'''
+Initial Conditions
 
-omega        = [0.01, 5.0, 0.0]
-q            = [1.0, 0.0, 0.0, 0.0]
-
+''' 
+_w           = vector(0.01, 5, 0)         # iniital ωy and small perturbation ωx
+_I           = vector(1e-4, 3.5e-4, 4e-4) # moments of inertia chosen arbitarily (though they must be distinct)
 dt           = 0.001
 t            = 0.0
+_euler_angles = [0.0, 0.0, 0.0]
 plot_counter = 0
+
+'''
+Animation
+'''
 
 draw_principal_axes()
 
 while True:
-    rate(1000)
-
+    rate(1/dt)
+    
     if not running:
         continue
-
-    # Evolve angular velocity (body frame)
+        
+#    # update ω
+    _w += derivs(_w, _I) * dt
     
-
-    # Evolve euler angles
-    euler_angles = euler_angles(euler_angles)
-
-    # Apply orientation to the compound object
-    wingnut.axis = transform(euler_angles) * wingnut.axis
-    # wingnut.up   = vector(R[0][1], R[1][1], R[2][1])
-
-    # Plot to graphs every 5 steps
+#    # update euler angles
+    _euler_angles = update_euler_angles(_euler_angles, _w)
+    
+    # update wingnut orientation
+#    R = transform(_euler_angles)
+#    wingnut.axis *= transform(_euler_angles)
+    
+    # we plot to graphs every 5 steps
     plot_counter += 1
     if plot_counter % 5 == 0:
-        Lb = [I1*omega[0], I2*omega[1], I3*omega[2]]
-        Lx = R[0][0]*Lb[0] + R[0][1]*Lb[1] + R[0][2]*Lb[2]
-        Ly = R[1][0]*Lb[0] + R[1][1]*Lb[1] + R[1][2]*Lb[2]
-        Lz = R[2][0]*Lb[0] + R[2][1]*Lb[1] + R[2][2]*Lb[2]
-
-        curve_wx.plot(t, omega[0])
-        curve_wy.plot(t, omega[1])
-        curve_wz.plot(t, omega[2])
-
-        curve_alpha.plot(t, euler_angles[0])
-        curve_beta.plot(t,  euler_angles[1])
-        curve_gamma.plot(t, euler_angles[2])
-
+        curve_wx.plot(t, _w.x)
+        curve_wy.plot(t, _w.y)
+        curve_wz.plot(t, _w.z)
+        
+        curve_roll.plot(t, _euler_angles[0])
+        curve_pitch.plot(t, _euler_angles[1])
+        curve_yaw.plot(t, _euler_angles[2])
+        
+        L_body = vector(_I.x * _w.x, _I.y * _w.y, _I.z * _w.z)
+        Lx = dot(vector(R[0][0], R[0][1], R[0][2]), L_body.x)
+        Ly = dot(vector(R[1][0], R[1][1], R[1][2]), L_body.y)
+        Lz = dot(vector(R[2][0], R[2][1], R[2][2]), L_body.z)
+        
         curve_Lx.plot(t, Lx)
         curve_Ly.plot(t, Ly)
         curve_Lz.plot(t, Lz)
-
+    
     t += dt
