@@ -55,12 +55,13 @@ g1 = graph(
     foreground = color.white,
     xmin = 0,  xmax = 20,
     ymin = -8, ymax = 8,
+    Scroll = True,
     fast   = True
 )
  
-curve_wx = gcurve(graph=g1, color=color.red,   label="ωx")
-curve_wy = gcurve(graph=g1, color=color.green, label="ωy")
-curve_wz = gcurve(graph=g1, color=color.cyan,  label="ωz")
+curve_wx = gcurve(graph=g1, color=color.red,   label="ω1")
+curve_wy = gcurve(graph=g1, color=color.green, label="ω2")
+curve_wz = gcurve(graph=g1, color=color.cyan,  label="ω3")
  
 curve_wx.plot(0, 0)
 curve_wy.plot(0, 0)
@@ -75,34 +76,36 @@ g2 = graph(
     background = color.black,
     foreground = color.white,
     xmin = 0,  xmax = 20,
-    ymin = -8, ymax = 8,
+    ymin = -4, ymax = 4,
+    Scroll = True,
     fast   = True
 )
  
-curve_alpha = gcurve(graph=g2, color=color.red,   label="alpha")
-curve_beta = gcurve(graph=g2, color=color.green, label="beta")
-curve_gamma = gcurve(graph=g2, color=color.cyan,  label="gamma")
+curve_alpha = gcurve(graph=g2, color=color.red,   label="alpha (yaw)")
+curve_beta = gcurve(graph=g2, color=color.green, label="beta (pitch)")
+curve_gamma = gcurve(graph=g2, color=color.cyan,  label="gamma (roll)")
  
 curve_alpha.plot(0, 0)
 curve_beta.plot(0, 0)
 curve_gamma.plot(0, 0)
 
 g3 = graph(
-    title  = "Moment of Inertia Components",
+    title  = "Angular Momentum Components",
     xtitle = "time  (s)",
-    ytitle = "moment of inertia (kg * m^2)",
+    ytitle = "L (kg*m^2/s)",
     width  = 800,
     height = 300,
     background = color.black,
     foreground = color.white,
     xmin = 0,  xmax = 20,
-    ymin = -8, ymax = 8,
+    ymin = -0.005, ymax = 0.005,
+    scroll = True,
     fast   = True
 )
  
-curve_ix = gcurve(graph=g3, color=color.red,   label="Ix")
-curve_iy = gcurve(graph=g3, color=color.green, label="Iy")
-curve_iz = gcurve(graph=g3, color=color.cyan,  label="Iz")
+curve_Lx = gcurve(graph=g3, color=color.red,   label="Lx")
+curve_Ly = gcurve(graph=g3, color=color.green, label="Ly")
+curve_Lz = gcurve(graph=g3, color=color.cyan,  label="Lz")
  
 curve_ix.plot(0, 0)
 curve_iy.plot(0, 0)
