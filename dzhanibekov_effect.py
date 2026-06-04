@@ -15,7 +15,7 @@ def toggle(b):
     b.text = "Stop" if running else "Start"
 
 scene.append_to_caption("\n")
-btn = button(text="Start", bind=toggle)
+start_btn = button(text="Start", bind=toggle)
 
 '''
 Wingnut Geomtry
@@ -38,7 +38,6 @@ parts.append(cylinder(
 ))
 
 wingnut = compound(parts, pos=vector(0, 0, 0))
-
 
 '''
 Graphs
@@ -130,7 +129,6 @@ principal_axes = [
 ]
 scene.append_to_caption("   ")
 btn_axes = button(text="Show Principal Axes", bind=toggle_axes)
-scene.append_to_caption("\n\n")
 
 axis_colors = [color.red, color.green, color.cyan]
 axis_scale   = 2.5  
@@ -166,6 +164,7 @@ def toggle_axes(b):
     for arr in principal_arrows:
         arr.visible = axes_visible
     b.text = "Hide Principal Axes" if axes_visible else "Show Principal Axes"
+    wingnut.opacity = 0.5 if axes_visible else 1
     
 '''
 Physics Engine
@@ -184,72 +183,11 @@ def update_euler_angles(euler_angles, w):
     roll += (w.x + tan(pitch) * (w.y * sin(roll) + w.z * cos(roll))) * dt
     pitch += (w.y * cos(roll) - w.z * sin(roll)) * dt
     yaw += ((w.y * sin(roll) + w.z * cos(roll)) / cos(pitch)) * dt
-
-#    roll  += (w.x * cos(yaw) / cos(pitch) - w.y * sin(yaw) / cos(pitch)) * dt
-#    pitch += (w.x * sin(yaw) + w.y * cos(yaw)) * dt
-#    yaw   += (-w.x * cos(yaw) * sin(pitch) / cos(pitch) + w.y * sin(pitch) * sin(yaw) / cos(pitch) + w.z) * dt
     
     return [roll, pitch, yaw]
-
-def rot_90_cw(m): # helper for mat_mul_3x3()
-    # copy m to res
-    res = [
-        [0, 0, 0],
-        [0, 0, 0],
-        [0, 0, 0]
-    ]
-    for i in range(3):
-        for j in range(3):
-            res[i][j] = m[i][j]
-            
-    # transpose
-    for i in range(3):
-        for j in range(3):
-            res[i][j] = m[j][i]
-    
-    # reflect
-    for i in range(3):
-        temp = res[i][0]
-        res[i][0] = res[i][2]
-        res[i][2] = temp
-    
-    return res
-    
-def mat_mul_3x3(m1, m2): # we are using this only to multiply the rotation matrices
-    res = [
-        [0, 0, 0],
-        [0, 0, 0],
-        [0, 0, 0]
-    ]
-    
-    m2 = rot_90_cw(m2)
-    
-    for i in range(3):
-        for j in range(3):
-            res[i][j] = dot(vector(m1[i][0], m1[i][1], m1[i][2]), vector(m2[j][0], m2[j][1], m2[j][2]))
-    
-    return res
-    
-def mat_mul(A, B):
-    rows = len(A)
-    cols = len(B[0])
-    result = [[0] * cols for i in range(rows)]
-    
-    for i in range(rows):
-        for j in range(cols):
-            for k in range(len(B)):
-                result[i][j] += A[i][k] * B[k][j]
- 
-    return result
             
 def transform(euler_angles):
     roll, pitch, yaw = euler_angles[0], euler_angles[1], euler_angles[2]
-    
-#    R = [
-#        [cos(pitch) * cos(yaw), -cos(pitch) * sin(yaw), sin(pitch)],
-#        [cos(roll) * sin(yaw) + cos(yaw) * sin(roll) * sin(pitch), cos(roll) * cos(yaw) - sin(roll) * sin(pitch) * sin(yaw), -cos(pitch) * sin(roll)],
-#        [sin(roll) * sin(yaw) - cos(roll) * cos(yaw) * sin(pitch), cos(yaw) * sin(roll) + cos(roll) * sin(pitch) * sin(yaw), cos(roll) * cos(pitch)]
-#    ]
 
     R = [
         [cos(pitch) * cos(yaw), sin(roll) * sin(pitch) * cos(yaw) - cos(roll) * sin(yaw), cos(roll) * sin(pitch) * cos(yaw) + sin(roll) * sin(yaw)],
@@ -259,37 +197,84 @@ def transform(euler_angles):
 
     return R
     
-#    Rx = [
-#        [1, 0, 0],
-#        [0, cos(roll), -sin(roll)],
-#        [0, sin(roll), cos(roll)]
-#    ]
-#    
-#    Ry = [
-#        [cos(pitch), 0, sin(pitch)],
-#        [0, 1, 0],
-#        [-sin(pitch), 0, cos(pitch)]
-#    ]
-#        
-#    Rz = [
-#        [cos(yaw), -sin(yaw), 0],
-#        [sin(yaw), cos(yaw), 0],
-#        [0, 0, 1]
-#    ]
-#        
-#    return mat_mul(mat_mul(Rx, Ry), Rz)
-    
 '''
 Initial Conditions
 
 ''' 
-_w           = vector(0.01, 10, 0)         # iniital ωy and small perturbation ωx
-_I           = vector(1e-4, 3.5e-4, 4e-4) # moments of inertia chosen arbitarily (though they must be distinct)
-dt           = 0.001
-t            = 0.0
+_w            = vector(0.01, 10, 0)        # iniital ωy and small perturbation ωx
+_I            = vector(1e-4, 3.5e-4, 4e-4) # moments of inertia chosen arbitarily (though they must be distinct)
+dt            = 0.001
+t             = 0.0
 _euler_angles = [0.0, 0.0, 0.0]
-plot_counter = 0
+plot_counter  = 0
 
+# modify initial conditions
+scene.append_to_caption("   ")
+reset_btn = button(text="Reset", bind=reset)
+scene.append_to_caption("\n\n")
+    
+def rotate_about(evt):
+    global _w
+    if evt.text == 'x':
+        _w = vector(10, 0.01, 0)
+    elif evt.text == 'y':
+        _w = vector(0.01, 10, 0)
+    elif evt.text == 'z':
+        _w = vector(0, 0.01, 10)
+
+scene.append_to_caption("\n\nChoose the axis to rotate about:")
+x_btn = radio(bind=rotate_about, text='x', name='axis')
+y_btn = radio(bind=rotate_about, text='y', name='axis', checked=True)
+z_btn = radio(bind=rotate_about, text='z', name='axis')
+
+def reset():
+    global running, wingnut, _w, _I, dt, t, _euler_angles, plot_counter, \
+           curve_wx, curve_wy, curve_wz, \
+           curve_yaw, curve_pitch, curve_roll, \
+           curve_Lx, curve_Ly, curve_Lx, \
+           x_btn, y_btn, z_btn
+       
+    start_btn.text = "Start"
+    running = False
+    
+    R = transform([0, 0, 0])
+    wingnut.axis = vector(R[0][0], R[1][0], R[2][0])
+    wingnut.up   = vector(R[0][1], R[1][1], R[2][1])
+    
+    for i in range(len(principal_arrows)):
+        principal_arrows[i].axis = vector(R[0][i], R[1][i], R[2][i]) * axis_scale
+           
+    _w            = vector(0.01, 10, 0)
+    _I            = vector(1e-4, 3.5e-4, 4e-4)
+    dt            = 0.001
+    t             = 0.0
+    _euler_angles = [0.0, 0.0, 0.0]
+    plot_counter  = 0
+    
+    curve_wx.delete()
+    curve_wy.delete()
+    curve_wz.delete()
+    g1.xmin = 0
+    g1.xmax = 20
+    curve_yaw.delete()
+    curve_pitch.delete()
+    curve_roll.delete()
+    g2.xmin = 0
+    g2.xmax = 20
+    curve_Lx.delete()
+    curve_Ly.delete()
+    curve_Lz.delete()
+    g3.xmin = 0
+    g3.xmax = 20
+    
+    x_btn.delete()
+    y_btn.delete()
+    z_btn.delete()
+    x_btn = radio(bind=rotate_about, text='x', name='axis')
+    y_btn = radio(bind=rotate_about, text='y', name='axis', checked=True)
+    z_btn = radio(bind=rotate_about, text='z', name='axis')
+
+    
 '''
 Animation
 '''
@@ -302,10 +287,10 @@ while True:
     if not running:
         continue
         
-#    # update ω
+    # update ω
     _w += derivs(_w, _I) * dt
     
-#    # update euler angles
+    # update euler angles
     _euler_angles = update_euler_angles(_euler_angles, _w)
     for i in range(3):
         if _euler_angles[i] > 2 * pi or _euler_angles[i] < -2 * pi:
@@ -314,11 +299,10 @@ while True:
     # update wingnut orientation
     R = transform(_euler_angles)
     wingnut.axis = vector(R[0][0], R[1][0], R[2][0])
-#    wingnut.axis = vector(
-#        dot(vector(R[0][0], R[0][1], R[0][2]), wingnut.axis),
-#        dot(vector(R[1][0], R[1][1], R[1][2]), wingnut.axis),
-#        dot(vector(R[2][0], R[2][1], R[2][2]), wingnut.axis)
-#    )
+    wingnut.up   = vector(R[0][1], R[1][1], R[2][1])
+    
+    for i in range(len(principal_arrows)):
+        principal_arrows[i].axis = vector(R[0][i], R[1][i], R[2][i]) * axis_scale
     
     # we plot to graphs every 5 steps
     plot_counter += 1
