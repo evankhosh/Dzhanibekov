@@ -240,12 +240,18 @@ def mat_mul(A, B):
 def transform(euler_angles):
     roll, pitch, yaw = euler_angles[0], euler_angles[1], euler_angles[2]
     
+#    R = [
+#        [cos(pitch) * cos(yaw), -cos(pitch) * sin(yaw), sin(pitch)],
+#        [cos(roll) * sin(yaw) + cos(yaw) * sin(roll) * sin(pitch), cos(roll) * cos(yaw) - sin(roll) * sin(pitch) * sin(yaw), -cos(pitch) * sin(roll)],
+#        [sin(roll) * sin(yaw) - cos(roll) * cos(yaw) * sin(pitch), cos(yaw) * sin(roll) + cos(roll) * sin(pitch) * sin(yaw), cos(roll) * cos(pitch)]
+#    ]
+
     R = [
-        [cos(pitch) * cos(yaw), -cos(pitch) * sin(yaw), sin(pitch)],
-        [cos(roll) * sin(yaw) + cos(yaw) * sin(roll) * sin(pitch), cos(roll) * cos(yaw) - sin(roll) * sin(pitch) * sin(yaw), -cos(pitch) * sin(roll)],
-        [sin(roll) * sin(yaw) - cos(roll) * cos(yaw) * sin(pitch), cos(yaw) * sin(roll) + cos(roll) * sin(pitch) * sin(yaw), cos(roll) * cos(pitch)]
+        [cos(pitch) * cos(yaw), sin(roll) * sin(pitch) * cos(yaw) - cos(roll) * sin(yaw), cos(roll) * sin(pitch) * cos(yaw) + sin(roll) * sin(yaw)],
+        [cos(pitch) * sin(yaw), sin(roll) * sin(pitch) * sin(yaw) + cos(roll) * cos(yaw), cos(roll) * sin(pitch) * sin(yaw) - sin(roll) * cos(yaw)],
+        [-sin(pitch), sin(roll) * cos(pitch), cos(roll) * cos(pitch)]
     ]
-    
+
     return R
     
 #    Rx = [
@@ -299,11 +305,12 @@ while True:
     
     # update wingnut orientation
     R = transform(_euler_angles)
-    wingnut.axis = vector(
-        dot(vector(R[0][0], R[0][1], R[0][2]), wingnut.axis),
-        dot(vector(R[1][0], R[1][1], R[1][2]), wingnut.axis),
-        dot(vector(R[2][0], R[2][1], R[2][2]), wingnut.axis)
-    )
+    wingnut.axis = vector(R[0][0], R[1][0], R[2][0])
+#    wingnut.axis = vector(
+#        dot(vector(R[0][0], R[0][1], R[0][2]), wingnut.axis),
+#        dot(vector(R[1][0], R[1][1], R[1][2]), wingnut.axis),
+#        dot(vector(R[2][0], R[2][1], R[2][2]), wingnut.axis)
+#    )
     
     # we plot to graphs every 5 steps
     plot_counter += 1
