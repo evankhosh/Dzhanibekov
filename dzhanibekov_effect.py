@@ -54,8 +54,8 @@ g1 = graph(
     foreground = color.white,
     xmin       = 0,  
     xmax       = 20,
-    ymin       = -8, 
-    ymax       = 8,
+    ymin       = -15, 
+    ymax       = 15,
     scroll     = True,
     fast       = True
 )
@@ -78,8 +78,8 @@ g2 = graph(
     foreground = color.white,
     xmin       = 0,  
     xmax       = 20,
-    ymin       = -6.5, 
-    ymax       = 6.5,
+    ymin       = -7, 
+    ymax       = 7,
     scroll     = True,
     fast       = True
 )
@@ -180,9 +180,14 @@ def derivs(w, I):
 
 def update_euler_angles(euler_angles, w):
     roll, pitch, yaw = euler_angles[0], euler_angles[1], euler_angles[2]
-    roll  += (w.x * cos(yaw) / cos(pitch) - w.y * sin(yaw) / cos(pitch)) * dt
-    pitch += (w.x * sin(yaw) + w.y * cos(yaw)) * dt
-    yaw   += (-w.x * cos(yaw) * sin(pitch) / cos(pitch) + w.y * sin(pitch) * sin(yaw) / cos(pitch) + w.z) * dt
+
+    roll += (w.x + tan(pitch) * (w.y * sin(roll) + w.z * cos(roll))) * dt
+    pitch += (w.y * cos(roll) - w.z * sin(roll)) * dt
+    yaw += ((w.y * sin(roll) + w.z * cos(roll)) / cos(pitch)) * dt
+
+#    roll  += (w.x * cos(yaw) / cos(pitch) - w.y * sin(yaw) / cos(pitch)) * dt
+#    pitch += (w.x * sin(yaw) + w.y * cos(yaw)) * dt
+#    yaw   += (-w.x * cos(yaw) * sin(pitch) / cos(pitch) + w.y * sin(pitch) * sin(yaw) / cos(pitch) + w.z) * dt
     
     return [roll, pitch, yaw]
 
@@ -278,7 +283,7 @@ def transform(euler_angles):
 Initial Conditions
 
 ''' 
-_w           = vector(0.01, 5, 0)         # iniital ωy and small perturbation ωx
+_w           = vector(0.01, 10, 0)         # iniital ωy and small perturbation ωx
 _I           = vector(1e-4, 3.5e-4, 4e-4) # moments of inertia chosen arbitarily (though they must be distinct)
 dt           = 0.001
 t            = 0.0
@@ -302,6 +307,9 @@ while True:
     
 #    # update euler angles
     _euler_angles = update_euler_angles(_euler_angles, _w)
+    for i in range(3):
+        if _euler_angles[i] > 2 * pi or _euler_angles[i] < -2 * pi:
+            _euler_angles[i] = _euler_angles[i] % (2 * pi)
     
     # update wingnut orientation
     R = transform(_euler_angles)
