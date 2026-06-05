@@ -4,8 +4,14 @@ scene.title = "Dzhanibekov Effect"
 scene.width = 800
 scene.height = 600
 scene.background = color.black
+scene.userzoom = False
 
 metal = vector(0.72, 0.72, 0.75)
+rho           = .001
+r1            = 0.5
+l1            = 3
+r2            = 0.75
+l2            = 5
 
 running = False
 
@@ -24,16 +30,16 @@ Wingnut Geomtry
 parts = []
 
 parts.append(cylinder(
-    pos    = vector(0, -.5, 0),
-    axis   = vector(0, 3, 0),
-    radius = 0.5,
+    pos    = vector(0, 0, 0),
+    axis   = vector(0, l1, 0),
+    radius = r1,
     color = metal
 ))
 
 parts.append(cylinder(
-    pos    = vector(-2.5, -.5, 0),
-    axis   = vector(5, 0, 0),
-    radius = 0.75,
+    pos    = vector(-l2 / 2, 0, 0),
+    axis   = vector(l2, 0, 0),
+    radius = r2,
     color = metal
 ))
 
@@ -197,12 +203,41 @@ def transform(euler_angles):
 
     return R
     
+def calculate_com(rho, r1, l1, r2, l2):
+    m1 = pi * (r1 ** 2) * l1 * rho
+    m2 = pi * (r2 ** 2) * l2 * rho
+    
+    return vector(0, (l1 * m1) / (2 * (m1 + m2)), 0)
+
+def moi_cylinder(rho, r, l):
+    m = pi * (r ** 2) * l * rho
+    
+    parallel = 0.5 * m * (r ** 2)
+    perpendicular = 0.25 * m * (r ** 2) + (1 / 12) * m * (l ** 2)
+    
+    return [parallel, perpendicular]
+
+def calculate_moi(rho, r1, l1, r2, l2):
+    com = calculate_com(rho, r1, l2, r2, l2)
+    
+    m1 = pi * (r1 ** 2) * l1 * rho
+    m2 = pi * (r2 ** 2) * l2 * rho
+    
+    moi1 = moi_cylinder(rho, r1, l1)
+    moi2 = moi_cylinder(rho, r2, l2)
+    
+    I1 = [moi1[1] + m1 * ((com.y - l1 / 2) ** 2), moi1[0], moi1[1] + m1 * ((com.y - l1 / 2) ** 2)]
+    I2 = [moi2[0] + m2 * ((com.y / 2) ** 2), moi2[1], moi2[1] + m2 * ((com.y / 2 ) ** 2)]
+    
+    return vector(I1[0] + I2[0], I1[1] + I2[1], I1[2] + I2[2])
+    
 '''
 Initial Conditions
 
 ''' 
 _w            = vector(0.01, 10, 0)        # iniital ωy and small perturbation ωx
-_I            = vector(1e-4, 3.5e-4, 4e-4) # moments of inertia chosen arbitarily (though they must be distinct)
+#_I            = vector(1e-4, 3.5e-4, 4e-4) # moments of inertia chosen arbitarily (though they must be distinct)
+_I            = calculate_moi(rho, r1, l1, r2, l2)
 dt            = 0.001
 t             = 0.0
 _euler_angles = [0.0, 0.0, 0.0]
@@ -223,9 +258,19 @@ def rotate_about(evt):
         _w = vector(0, 0.01, 10)
 
 scene.append_to_caption("\n\nChoose the axis to rotate about:")
-x_btn = radio(bind=rotate_about, text='x', name='axis')
-y_btn = radio(bind=rotate_about, text='y', name='axis', checked=True)
-z_btn = radio(bind=rotate_about, text='z', name='axis')
+if (_I.x > _I.y and _I.x < _I.z or _I.x < _I.y and _I.x > _I.z):
+    x_btn = radio(bind=rotate_about, text='x', name='axis', checked=True)
+    y_btn = radio(bind=rotate_about, text='y', name='axis')
+    z_btn = radio(bind=rotate_about, text='z', name='axis')
+elif (_I.y > _I.x and _I.y < _I.z or _I.y < _I.x and _I.y > _I.z):
+    x_btn = radio(bind=rotate_about, text='x', name='axis')
+    y_btn = radio(bind=rotate_about, text='y', name='axis', checked=True)
+    z_btn = radio(bind=rotate_about, text='z', name='axis')
+else:
+    x_btn = radio(bind=rotate_about, text='x', name='axis')
+    y_btn = radio(bind=rotate_about, text='y', name='axis')
+    z_btn = radio(bind=rotate_about, text='z', name='axis', checked=True)
+
 
 def reset():
     global running, wingnut, _w, _I, dt, t, _euler_angles, plot_counter, \
@@ -245,7 +290,8 @@ def reset():
         principal_arrows[i].axis = vector(R[0][i], R[1][i], R[2][i]) * axis_scale
            
     _w            = vector(0.01, 10, 0)
-    _I            = vector(1e-4, 3.5e-4, 4e-4)
+#    _I            = vector(1e-4, 3.5e-4, 4e-4)
+    _I            = calculate_moi(rho, r1, l1, r2, l2)
     dt            = 0.001
     t             = 0.0
     _euler_angles = [0.0, 0.0, 0.0]
@@ -293,8 +339,10 @@ while True:
     # update euler angles
     _euler_angles = update_euler_angles(_euler_angles, _w)
     for i in range(3):
-        if _euler_angles[i] > 2 * pi or _euler_angles[i] < -2 * pi:
+        if _euler_angles[i] > 2 * pi:
             _euler_angles[i] = _euler_angles[i] % (2 * pi)
+        if _euler_angles[i] < 2 * pi:
+            _euler_angles[i] = _euler_angles[i] % (-2 * pi)
     
     # update wingnut orientation
     R = transform(_euler_angles)
