@@ -265,18 +265,9 @@ def rotate_about(evt):
         _w = vector(0, 0.01, 10)
 
 scene.append_to_caption("\n\nChoose the axis to rotate about:")
-if (_I.x > _I.y and _I.x < _I.z or _I.x < _I.y and _I.x > _I.z):
-    x_btn = radio(bind=rotate_about, text='x', name='axis', checked=True)
-    y_btn = radio(bind=rotate_about, text='y', name='axis')
-    z_btn = radio(bind=rotate_about, text='z', name='axis')
-elif (_I.y > _I.x and _I.y < _I.z or _I.y < _I.x and _I.y > _I.z):
-    x_btn = radio(bind=rotate_about, text='x', name='axis')
-    y_btn = radio(bind=rotate_about, text='y', name='axis', checked=True)
-    z_btn = radio(bind=rotate_about, text='z', name='axis')
-else:
-    x_btn = radio(bind=rotate_about, text='x', name='axis')
-    y_btn = radio(bind=rotate_about, text='y', name='axis')
-    z_btn = radio(bind=rotate_about, text='z', name='axis', checked=True)
+x_btn = radio(bind=rotate_about, text='x', name='axis')
+y_btn = radio(bind=rotate_about, text='y', name='axis', checked=True)
+z_btn = radio(bind=rotate_about, text='z', name='axis')
     
 def set_cylinder_len(evt):
     if evt.id is 'l1':
@@ -325,14 +316,20 @@ def reset():
     for i in range(len(principal_arrows)):
         principal_arrows[i].axis = vector(R[0][i], R[1][i], R[2][i]) * axis_scale
            
-    _w            = vector(0.01, 10, 0)
+    if x_btn.checked:
+        _w = vector(10, 0.01, 0)
+    elif y_btn.checked:
+        _w = vector(0.01, 10, 0)
+    elif z_btn.checked:
+        _w = vector(0, 0.01, 10)
+    
 #    _I            = vector(1e-4, 3.5e-4, 4e-4)
-    _I            = calculate_moi(rho, r1, l1, r2, l2)
+    _I            = calculate_moi(_rho, _r1, _l1, _r2, _l2)
     dt            = 0.001
     t             = 0.0
     _euler_angles = [0.0, 0.0, 0.0]
     plot_counter  = 0
-    
+    '''
     _r1            = 0.5
     _l1            = 3
     _r2            = 0.75
@@ -342,7 +339,7 @@ def reset():
     l2_slider.delete()
     l1_slider = slider(bind=set_cylinder_len, min=2, max=10, step=0.1, value=_l1, id='l1')
     l2_slider = slider(bind=set_cylinder_len, min=2, max=10, step=0.1, value=_l2, id='l2')
-    
+    '''
     curve_wx.delete()
     curve_wy.delete()
     curve_wz.delete()
@@ -358,13 +355,15 @@ def reset():
     curve_Lz.delete()
     g3.xmin = 0
     g3.xmax = 20
-    
+    '''
     x_btn.delete()
     y_btn.delete()
     z_btn.delete()
     x_btn = radio(bind=rotate_about, text='x', name='axis')
     y_btn = radio(bind=rotate_about, text='y', name='axis', checked=True)
     z_btn = radio(bind=rotate_about, text='z', name='axis')
+    '''
+    
 
     
 '''
