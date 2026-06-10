@@ -7,11 +7,11 @@ scene.background = color.black
 scene.userzoom = False
 
 metal = vector(0.72, 0.72, 0.75)
-rho           = .001
-r1            = 0.5
-l1            = 3
-r2            = 0.75
-l2            = 5
+_rho           = .001
+_r1            = 0.5
+_l1            = 3
+_r2            = 0.75
+_l2            = 5
 
 running = False
 
@@ -26,24 +26,31 @@ start_btn = button(text="Start", bind=toggle)
 '''
 Wingnut Geomtry
 '''
+wingnut = compound([cylinder(pos=vector(0,0,0), axis=vector(0,1,0),radius=1)]) # arbitrary compound
 
-parts = []
+def create_wingnut(r1, l1, r2, l2):
+    parts = []
+    
+    parts.append(cylinder(
+        pos    = vector(0, 0, 0),
+        axis   = vector(0, _l1, 0),
+        radius = _r1,
+        color  = metal
+    ))
+    
+    parts.append(cylinder(
+        pos    = vector(-_l2 / 2, 0, 0),
+        axis   = vector(_l2, 0, 0),
+        radius = _r2,
+        color  = metal
+    ))
+    
+    global wingnut
+    wingnut.visible = False
+    del wingnut
+    wingnut = compound(parts, pos=vector(0, 0, 0))
 
-parts.append(cylinder(
-    pos    = vector(0, 0, 0),
-    axis   = vector(0, l1, 0),
-    radius = r1,
-    color = metal
-))
-
-parts.append(cylinder(
-    pos    = vector(-l2 / 2, 0, 0),
-    axis   = vector(l2, 0, 0),
-    radius = r2,
-    color = metal
-))
-
-wingnut = compound(parts, pos=vector(0, 0, 0))
+create_wingnut(_r1, _l1, _r2, _l2)
 
 '''
 Graphs
@@ -206,29 +213,28 @@ def transform(euler_angles):
 def calculate_com(rho, r1, l1, r2, l2):
     m1 = pi * (r1 ** 2) * l1 * rho
     m2 = pi * (r2 ** 2) * l2 * rho
-    
+
     return vector(0, (l1 * m1) / (2 * (m1 + m2)), 0)
 
 def moi_cylinder(rho, r, l):
     m = pi * (r ** 2) * l * rho
-    
+
     parallel = 0.5 * m * (r ** 2)
     perpendicular = 0.25 * m * (r ** 2) + (1 / 12) * m * (l ** 2)
-    
-    return [parallel, perpendicular]
 
+    return [parallel, perpendicular]
 def calculate_moi(rho, r1, l1, r2, l2):
     com = calculate_com(rho, r1, l2, r2, l2)
-    
+
     m1 = pi * (r1 ** 2) * l1 * rho
     m2 = pi * (r2 ** 2) * l2 * rho
-    
+
     moi1 = moi_cylinder(rho, r1, l1)
     moi2 = moi_cylinder(rho, r2, l2)
-    
+
     I1 = [moi1[1] + m1 * ((com.y - l1 / 2) ** 2), moi1[0], moi1[1] + m1 * ((com.y - l1 / 2) ** 2)]
     I2 = [moi2[0] + m2 * ((com.y / 2) ** 2), moi2[1], moi2[1] + m2 * ((com.y / 2 ) ** 2)]
-    
+
     return vector(I1[0] + I2[0], I1[1] + I2[1], I1[2] + I2[2])
     
 '''
@@ -237,7 +243,8 @@ Initial Conditions
 ''' 
 _w            = vector(0.01, 10, 0)        # iniital ωy and small perturbation ωx
 #_I            = vector(1e-4, 3.5e-4, 4e-4) # moments of inertia chosen arbitarily (though they must be distinct)
-_I            = calculate_moi(rho, r1, l1, r2, l2)
+_I            = calculate_moi(_rho, _r1, _l1, _r2, _l2)
+#alert(_I)
 dt            = 0.001
 t             = 0.0
 _euler_angles = [0.0, 0.0, 0.0]
@@ -270,10 +277,39 @@ else:
     x_btn = radio(bind=rotate_about, text='x', name='axis')
     y_btn = radio(bind=rotate_about, text='y', name='axis')
     z_btn = radio(bind=rotate_about, text='z', name='axis', checked=True)
+    
+def set_cylinder_len(evt):
+    if evt.id is 'l1':
+        global _l1
+        _l1 = evt.value
+    elif evt.id is 'l2':
+        global _l2
+        _l2 = evt.value
+        
+    create_wingnut(_r1, _l1, _r2, _l2)
+    global _I
+    _I = calculate_moi(_rho, _r1, _l1, _r2, _l2)
 
+scene.append_to_caption("\n\n")
+scene.append_to_caption("Cylinder 1 Length:")    
+l1_slider = slider(bind=set_cylinder_len, min=2, max=10, step=0.1, value=_l1, id='l1')
+scene.append_to_caption("\n\n")
+scene.append_to_caption("Cylinder 2 Length:")
+l2_slider = slider(bind=set_cylinder_len, min=2, max=10, step=0.1, value=_l2, id='l2')
+
+def set_omega(evt):
+    global _w
+    if evt.id is 'w':
+        _w = evt.value
+
+scene.append_to_caption("\n\n")
+scene.append_to_caption("Initial Angular Velocity:")
+l2_slider = slider(bind=set_omega, min=5, max=1000, step=5, value=_w, id='w')
 
 def reset():
     global running, wingnut, _w, _I, dt, t, _euler_angles, plot_counter, \
+           _r1, _l1, _r2, _l2, \
+           l1_slider, l2_slider, \
            curve_wx, curve_wy, curve_wz, \
            curve_yaw, curve_pitch, curve_roll, \
            curve_Lx, curve_Ly, curve_Lx, \
@@ -296,6 +332,16 @@ def reset():
     t             = 0.0
     _euler_angles = [0.0, 0.0, 0.0]
     plot_counter  = 0
+    
+    _r1            = 0.5
+    _l1            = 3
+    _r2            = 0.75
+    _l2            = 5
+    
+    l1_slider.delete()
+    l2_slider.delete()
+    l1_slider = slider(bind=set_cylinder_len, min=2, max=10, step=0.1, value=_l1, id='l1')
+    l2_slider = slider(bind=set_cylinder_len, min=2, max=10, step=0.1, value=_l2, id='l2')
     
     curve_wx.delete()
     curve_wy.delete()
