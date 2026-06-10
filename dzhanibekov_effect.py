@@ -264,19 +264,25 @@ def rotate_about(evt):
     elif evt.text == 'z':
         _w = vector(0, 0.01, 10)
 
+def rotation_buttons():
+    if (_I.x > _I.y and _I.x < _I.z or _I.x < _I.y and _I.x > _I.z):
+        x_btn = radio(bind=rotate_about, text='x', name='axis', checked=True)
+        y_btn = radio(bind=rotate_about, text='y', name='axis')
+        z_btn = radio(bind=rotate_about, text='z', name='axis')
+        _w = vector(10, 0.01, 0)
+    elif (_I.y > _I.x and _I.y < _I.z or _I.y < _I.x and _I.y > _I.z):
+        x_btn = radio(bind=rotate_about, text='x', name='axis')
+        y_btn = radio(bind=rotate_about, text='y', name='axis', checked=True)
+        z_btn = radio(bind=rotate_about, text='z', name='axis')
+        _w = vector(0.01, 10, 0)
+    else:
+        x_btn = radio(bind=rotate_about, text='x', name='axis')
+        y_btn = radio(bind=rotate_about, text='y', name='axis')
+        z_btn = radio(bind=rotate_about, text='z', name='axis', checked=True)
+        _w = vector(0, 0.01, 10)
+
 scene.append_to_caption("\n\nChoose the axis to rotate about:")
-if (_I.x > _I.y and _I.x < _I.z or _I.x < _I.y and _I.x > _I.z):
-    x_btn = radio(bind=rotate_about, text='x', name='axis', checked=True)
-    y_btn = radio(bind=rotate_about, text='y', name='axis')
-    z_btn = radio(bind=rotate_about, text='z', name='axis')
-elif (_I.y > _I.x and _I.y < _I.z or _I.y < _I.x and _I.y > _I.z):
-    x_btn = radio(bind=rotate_about, text='x', name='axis')
-    y_btn = radio(bind=rotate_about, text='y', name='axis', checked=True)
-    z_btn = radio(bind=rotate_about, text='z', name='axis')
-else:
-    x_btn = radio(bind=rotate_about, text='x', name='axis')
-    y_btn = radio(bind=rotate_about, text='y', name='axis')
-    z_btn = radio(bind=rotate_about, text='z', name='axis', checked=True)
+rotation_buttons()
     
 def set_cylinder_len(evt):
     if evt.id is 'l1':
@@ -362,9 +368,7 @@ def reset():
     x_btn.delete()
     y_btn.delete()
     z_btn.delete()
-    x_btn = radio(bind=rotate_about, text='x', name='axis')
-    y_btn = radio(bind=rotate_about, text='y', name='axis', checked=True)
-    z_btn = radio(bind=rotate_about, text='z', name='axis')
+    rotation_buttons()
 
     
 '''
