@@ -73,6 +73,12 @@ g1 = graph(
     fast       = True
 )
 
+def scale_g1(w):
+    global g1
+    
+    g1.ymin = -1.5 * w.mag
+    g1.ymax = 1.5 * w.mag
+
 curve_wx = gcurve(graph=g1, color=color.red,   label="ω1")
 curve_wy = gcurve(graph=g1, color=color.green, label="ω2")
 curve_wz = gcurve(graph=g1, color=color.cyan,  label="ω3")
@@ -116,11 +122,18 @@ g3 = graph(
     foreground = color.white,
     xmin       = 0,      
     xmax       = 20,
-    ymin       = -0.005, 
-    ymax       = 0.005,
+    ymin       = -0.5, 
+    ymax       = 0.5,
     scroll     = True,
     fast       = True
 )
+
+def scale_g3(w, I):
+    global g3
+    
+    L_mag = mag(vector(I.x * w.x, I.y * w.y, I.z * w.z))
+    g3.ymin = -1.5 * L_mag
+    g3.ymax = 1.5 * L_mag
 
 curve_Lx = gcurve(graph=g3, color=color.red,   label="Lx")
 curve_Ly = gcurve(graph=g3, color=color.green, label="Ly")
@@ -281,8 +294,11 @@ def set_cylinder_len(evt):
         _l2 = evt.value
         
     create_wingnut(_r1, _l1, _r2, _l2)
-    global _I
+    global _w, _I
     _I = calculate_moi(_rho, _r1, _l1, _r2, _l2)
+    #_I = vector(1e-4, 3.5e-4, 4e-4)
+    
+    scale_g3(_w, _I)
 
 scene.append_to_caption("\n\n")
 scene.append_to_caption("Cylinder 1 Length:")    
@@ -306,7 +322,7 @@ def reset():
            l1_slider, l2_slider, \
            curve_wx, curve_wy, curve_wz, \
            curve_yaw, curve_pitch, curve_roll, \
-           curve_Lx, curve_Ly, curve_Lx, \
+           curve_Lx, curve_Ly, curve_Lz, \
            x_btn, y_btn, z_btn
        
     start_btn.text = "Start"
@@ -324,7 +340,9 @@ def reset():
     elif y_btn.checked:
         _w = vector(0.01, _w_start, 0)
     elif z_btn.checked:
-        _w = vector(0, 0.01, _w_start)
+        _w = vector(0, 0.01, _w_start) 
+        
+    scale_g1(_w)
     
 #    _I            = vector(1e-4, 3.5e-4, 4e-4)
     _I            = calculate_moi(_rho, _r1, _l1, _r2, _l2)
@@ -332,6 +350,8 @@ def reset():
     t             = 0.0
     _euler_angles = [0.0, 0.0, 0.0]
     plot_counter  = 0
+    
+    scale_g3(_w, _I)
     
     '''
     _r1            = 0.5
@@ -391,7 +411,9 @@ while True:
             _w = vector(0.01, _w_start, 0)
         elif z_btn.checked:
             _w = vector(0, 0.01, _w_start)
-        
+            
+        scale_g1(_w)
+        scale_g3(_w, _I)
         initial = False
     
     # update ω
@@ -425,15 +447,15 @@ while True:
         curve_yaw.plot(t, _euler_angles[2])
         
         L_body = vector(_I.x * _w.x, _I.y * _w.y, _I.z * _w.z)
+        
+        '''
         Lx = dot(vector(R[0][0], R[1][0], R[2][0]), L_body)
         Ly = dot(vector(R[0][1], R[1][1], R[2][1]), L_body)
         Lz = dot(vector(R[0][2], R[1][2], R[2][2]), L_body)
-
         '''
         Lx = dot(vector(R[0][0], R[0][1], R[0][2]), L_body)
         Ly = dot(vector(R[1][0], R[1][1], R[1][2]), L_body)
         Lz = dot(vector(R[2][0], R[2][1], R[2][2]), L_body)
-        '''
         
         curve_Lx.plot(t, Lx)
         curve_Ly.plot(t, Ly)
