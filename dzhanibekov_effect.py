@@ -50,6 +50,8 @@ def create_wingnut(r1, l1, r2, l2):
     wingnut.visible = False
     del wingnut
     wingnut = compound(parts, pos=vector(0, 0, 0))
+    if axes_visible:
+        wingnut.opacity = 0.5
 
 create_wingnut(_r1, _l1, _r2, _l2)
 
@@ -59,8 +61,8 @@ Graphs
 
 g1 = graph(
     title      = "Angular velocity components",
-    xtitle     = "time  (s)",
-    ytitle     = "ω  (rad/s)",
+    xtitle     = "time (s)",
+    ytitle     = "ω (rad/s)",
     width      = 800,
     height     = 300,
     background = color.black,
@@ -122,8 +124,8 @@ g3 = graph(
     foreground = color.white,
     xmin       = 0,      
     xmax       = 20,
-    ymin       = -0.5, 
-    ymax       = 0.5,
+    ymin       = -1, 
+    ymax       = 2,
     scroll     = True,
     fast       = True
 )
@@ -207,11 +209,11 @@ def derivs(w, I):
 def update_euler_angles(euler_angles, w):
     roll, pitch, yaw = euler_angles[0], euler_angles[1], euler_angles[2]
 
-    d_roll = w.x + tan(pitch) * (w.y * sin(roll) + w.z * cos(roll))
-    d_pitch = w.y * cos(roll) - w.z * sin(roll)
-    d_yaw = (w.y * sin(roll) + w.z * cos(roll)) / cos(pitch)
+    roll += (w.x + tan(pitch) * (w.y * sin(roll) + w.z * cos(roll))) * dt
+    pitch += (w.y * cos(roll) - w.z * sin(roll)) * dt
+    yaw += ((w.y * sin(roll) + w.z * cos(roll)) / cos(pitch)) * dt
     
-    return [roll + d_roll * dt, pitch + d_pitch * dt, yaw + d_yaw * dt]
+    return [roll, pitch, yaw]
             
 def transform(euler_angles):
     roll, pitch, yaw = euler_angles[0], euler_angles[1], euler_angles[2]
@@ -237,9 +239,8 @@ def moi_cylinder(rho, r, l):
     perpendicular = 0.25 * m * (r ** 2) + (1 / 12) * m * (l ** 2)
 
     return [parallel, perpendicular]
-    
 def calculate_moi(rho, r1, l1, r2, l2):
-    com = calculate_com(rho, r1, l1, r2, l2)
+    com = calculate_com(rho, r1, l2, r2, l2)
 
     m1 = pi * (r1 ** 2) * l1 * rho
     m2 = pi * (r2 ** 2) * l2 * rho
@@ -248,19 +249,18 @@ def calculate_moi(rho, r1, l1, r2, l2):
     moi2 = moi_cylinder(rho, r2, l2)
 
     I1 = [moi1[1] + m1 * ((com.y - l1 / 2) ** 2), moi1[0], moi1[1] + m1 * ((com.y - l1 / 2) ** 2)]
-    I2 = [moi2[0] + m2 * (com.y ** 2), moi2[1], moi2[1] + m2 * (com.y ** 2)]
+    I2 = [moi2[0] + m2 * ((com.y / 2) ** 2), moi2[1], moi2[1] + m2 * ((com.y / 2 ) ** 2)]
 
     return vector(I1[0] + I2[0], I1[1] + I2[1], I1[2] + I2[2])
     
 '''
 Initial Conditions
 
-''' 
-_w_start      = 10        # iniital wy and small perturbation wx
-_w            = vector(0.01, _w_start, 0)
+'''
+_w_start      = 10
+_w            = vector(0.01, _w_start, 0)        # iniital ωy and small perturbation ωx
 #_I            = vector(1e-4, 3.5e-4, 4e-4) # moments of inertia chosen arbitarily (though they must be distinct)
 _I            = calculate_moi(_rho, _r1, _l1, _r2, _l2)
-#alert(_I)
 dt            = 0.001
 t             = 0.0
 _euler_angles = [0.0, 0.0, 0.0]
@@ -289,61 +289,85 @@ def set_cylinder_len(evt):
     if evt.id is 'l1':
         global _l1
         _l1 = evt.value
+        l1_txt.text = '{:1.2f}'.format(_l1)
     elif evt.id is 'l2':
         global _l2
         _l2 = evt.value
+        l2_txt.text = '{:1.2f}'.format(_l2)
         
     create_wingnut(_r1, _l1, _r2, _l2)
-    global _w, _I
+    global _I
     _I = calculate_moi(_rho, _r1, _l1, _r2, _l2)
-    #_I = vector(1e-4, 3.5e-4, 4e-4)
-    
-    scale_g3(_w, _I)
 
 scene.append_to_caption("\n\n")
 scene.append_to_caption("Cylinder 1 Length:")    
 l1_slider = slider(bind=set_cylinder_len, min=2, max=10, step=0.1, value=_l1, id='l1')
+l1_txt = wtext(text='{:1.2f}'.format(_l1))
+scene.append_to_caption(' m')
 scene.append_to_caption("\n\n")
 scene.append_to_caption("Cylinder 2 Length:")
 l2_slider = slider(bind=set_cylinder_len, min=2, max=10, step=0.1, value=_l2, id='l2')
+l2_txt = wtext(text='{:1.2f}'.format(_l2))
+scene.append_to_caption(' m')
 
 def set_omega(evt):
-    global _w_start
-    if evt.id is 'w':
-        _w_start = evt.value
+    global _w
+    omega = evt.value
+    pert = omega / 100
+    if x_btn.checked:
+        _w = vector(omega, pert, 0)
+        w_txt.text = '{:1.2f}'.format(_w.x)
+    elif y_btn.checked:
+        _w = vector(pert, omega, 0)
+        w_txt.text = '{:1.2f}'.format(_w.y)
+    elif z_btn.checked:
+        _w = vector(0, pert, omega)
+        w_txt.text = '{:1.2f}'.format(_w.z)
 
 scene.append_to_caption("\n\n")
-scene.append_to_caption("Initial Angular Velocity:")
-w_slider = slider(bind=set_omega, min=1, max=20, step=1, value=_w_start, id='w')
+scene.append_to_caption("Angular Velocity about Axis:")
+w_slider = slider(bind=set_omega, min=1, max=25, step=1, value=10, id='w')
+w_txt = wtext(text='{:1.2f}'.format(_w.y))    
+if x_btn.checked:
+    w_txt.text = '{:1.2f}'.format(_w.x)
+elif y_btn.checked:
+    w_txt.text = '{:1.2f}'.format(_w.y)
+elif z_btn.checked:
+    w_txt.text = '{:1.2f}'.format(_w.z)
+scene.append_to_caption(' rad/s')
 
 def reset():
-    global running, wingnut, _w_start, _w, _I, dt, t, _euler_angles, plot_counter, \
+    global running, wingnut, _w, _I, dt, t, _euler_angles, plot_counter, \
            _r1, _l1, _r2, _l2, \
            l1_slider, l2_slider, \
            curve_wx, curve_wy, curve_wz, \
            curve_yaw, curve_pitch, curve_roll, \
-           curve_Lx, curve_Ly, curve_Lz, \
+           curve_Lx, curve_Ly, curve_Lx, \
            x_btn, y_btn, z_btn
        
     start_btn.text = "Start"
     running = False
-    
+           
+    _r1           = 0.5
+    _l1           = 3
+    _r2           = 0.75
+    _l2           = 5
+    create_wingnut(_r1, _l1, _r2, _l2)
     R = transform([0, 0, 0])
     wingnut.axis = vector(R[0][0], R[1][0], R[2][0])
     wingnut.up   = vector(R[0][1], R[1][1], R[2][1])
-    
     for i in range(len(principal_arrows)):
         principal_arrows[i].axis = vector(R[0][i], R[1][i], R[2][i]) * axis_scale
-           
+    
     if x_btn.checked:
         _w = vector(_w_start, 0.01, 0)
     elif y_btn.checked:
         _w = vector(0.01, _w_start, 0)
     elif z_btn.checked:
-        _w = vector(0, 0.01, _w_start) 
-        
+        _w = vector(0, 0.01, _w_start)
+            
     scale_g1(_w)
-    
+
 #    _I            = vector(1e-4, 3.5e-4, 4e-4)
     _I            = calculate_moi(_rho, _r1, _l1, _r2, _l2)
     dt            = 0.001
@@ -353,17 +377,16 @@ def reset():
     
     scale_g3(_w, _I)
     
-    '''
-    _r1            = 0.5
-    _l1            = 3
-    _r2            = 0.75
-    _l2            = 5
+    x_btn.checked = False
+    y_btn.checked = True
+    z_btn.checked = False
     
-    l1_slider.delete()
-    l2_slider.delete()
-    l1_slider = slider(bind=set_cylinder_len, min=2, max=10, step=0.1, value=_l1, id='l1')
-    l2_slider = slider(bind=set_cylinder_len, min=2, max=10, step=0.1, value=_l2, id='l2')
-    '''
+    l1_slider.value = _l1
+    l1_txt.text = '{:1.2f}'.format(_l1)
+    l2_slider.value = _l2
+    w_txt.text = '{:1.2f}'.format(_l2)
+    w_slider.value  = _w.y
+    w_txt.text = '{:1.2f}'.format(_w.y)
     
     curve_wx.delete()
     curve_wy.delete()
@@ -380,18 +403,7 @@ def reset():
     curve_Lz.delete()
     g3.xmin = 0
     g3.xmax = 20
-    
-    '''
-    x_btn.delete()
-    y_btn.delete()
-    z_btn.delete()
-    x_btn = radio(bind=rotate_about, text='x', name='axis')
-    y_btn = radio(bind=rotate_about, text='y', name='axis', checked=True)
-    z_btn = radio(bind=rotate_about, text='z', name='axis')
-    '''
-    
 
-    
 '''
 Animation
 '''
@@ -415,7 +427,7 @@ while True:
         scale_g1(_w)
         scale_g3(_w, _I)
         initial = False
-    
+        
     # update ω
     _w += derivs(_w, _I) * dt
     
@@ -424,7 +436,7 @@ while True:
     for i in range(3):
         if _euler_angles[i] > 2 * pi:
             _euler_angles[i] = _euler_angles[i] % (2 * pi)
-        if _euler_angles[i] < -2 * pi:
+        if _euler_angles[i] < 2 * pi:
             _euler_angles[i] = _euler_angles[i] % (-2 * pi)
     
     # update wingnut orientation
@@ -447,12 +459,6 @@ while True:
         curve_yaw.plot(t, _euler_angles[2])
         
         L_body = vector(_I.x * _w.x, _I.y * _w.y, _I.z * _w.z)
-        
-        '''
-        Lx = dot(vector(R[0][0], R[1][0], R[2][0]), L_body)
-        Ly = dot(vector(R[0][1], R[1][1], R[2][1]), L_body)
-        Lz = dot(vector(R[0][2], R[1][2], R[2][2]), L_body)
-        '''
         Lx = dot(vector(R[0][0], R[0][1], R[0][2]), L_body)
         Ly = dot(vector(R[1][0], R[1][1], R[1][2]), L_body)
         Lz = dot(vector(R[2][0], R[2][1], R[2][2]), L_body)
