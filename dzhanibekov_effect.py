@@ -14,7 +14,6 @@ _r2            = 0.75
 _l2            = 5
 
 running = False
-initial = True
 
 def toggle(b):
     global running
@@ -257,8 +256,7 @@ def calculate_moi(rho, r1, l1, r2, l2):
 Initial Conditions
 
 '''
-_w_start      = 10
-_w            = vector(0.01, _w_start, 0)        # iniital ωy and small perturbation ωx
+_w            = vector(0.01, 10, 0)        # iniital ωy and small perturbation ωx
 #_I            = vector(1e-4, 3.5e-4, 4e-4) # moments of inertia chosen arbitarily (though they must be distinct)
 _I            = calculate_moi(_rho, _r1, _l1, _r2, _l2)
 dt            = 0.001
@@ -272,13 +270,16 @@ reset_btn = button(text="Reset", bind=reset)
 scene.append_to_caption("\n\n")
     
 def rotate_about(evt):
-    global _w
+    global _w, _I
     if evt.text == 'x':
         _w = vector(10, 0.01, 0)
     elif evt.text == 'y':
         _w = vector(0.01, 10, 0)
     elif evt.text == 'z':
         _w = vector(0, 0.01, 10)
+        
+    scale_g1(_w)
+    scale_g3(_w, _I)
 
 scene.append_to_caption("\n\nChoose the axis to rotate about:")
 x_btn = radio(bind=rotate_about, text='x', name='axis')
@@ -296,8 +297,9 @@ def set_cylinder_len(evt):
         l2_txt.text = '{:1.2f}'.format(_l2)
         
     create_wingnut(_r1, _l1, _r2, _l2)
-    global _I
+    global _w, _I
     _I = calculate_moi(_rho, _r1, _l1, _r2, _l2)
+    scale_g3(_w, _I)
 
 scene.append_to_caption("\n\n")
 scene.append_to_caption("Cylinder 1 Length:")    
@@ -311,7 +313,7 @@ l2_txt = wtext(text='{:1.2f}'.format(_l2))
 scene.append_to_caption(' m')
 
 def set_omega(evt):
-    global _w
+    global _w, _I
     omega = evt.value
     pert = omega / 100
     if x_btn.checked:
@@ -323,6 +325,9 @@ def set_omega(evt):
     elif z_btn.checked:
         _w = vector(0, pert, omega)
         w_txt.text = '{:1.2f}'.format(_w.z)
+        
+    scale_g1(_w)
+    scale_g3(_w, _I)
 
 scene.append_to_caption("\n\n")
 scene.append_to_caption("Angular Velocity about Axis:")
@@ -359,12 +364,16 @@ def reset():
     for i in range(len(principal_arrows)):
         principal_arrows[i].axis = vector(R[0][i], R[1][i], R[2][i]) * axis_scale
     
+    x_btn.checked = False
+    y_btn.checked = True
+    z_btn.checked = False
+    
     if x_btn.checked:
-        _w = vector(_w_start, 0.01, 0)
+        _w = vector(10, 0.01, 0)
     elif y_btn.checked:
-        _w = vector(0.01, _w_start, 0)
+        _w = vector(0.01, 10, 0)
     elif z_btn.checked:
-        _w = vector(0, 0.01, _w_start)
+        _w = vector(0, 0.01, 10)
             
     scale_g1(_w)
 
@@ -376,10 +385,6 @@ def reset():
     plot_counter  = 0
     
     scale_g3(_w, _I)
-    
-    x_btn.checked = False
-    y_btn.checked = True
-    z_btn.checked = False
     
     l1_slider.value = _l1
     l1_txt.text = '{:1.2f}'.format(_l1)
@@ -403,6 +408,7 @@ def reset():
     curve_Lz.delete()
     g3.xmin = 0
     g3.xmax = 20
+    
 
 '''
 Animation
@@ -415,14 +421,6 @@ while True:
     
     if not running:
         continue
-    
-    if initial:
-        if x_btn.checked:
-            _w = vector(_w_start, 0.01, 0)
-        elif y_btn.checked:
-            _w = vector(0.01, _w_start, 0)
-        elif z_btn.checked:
-            _w = vector(0, 0.01, _w_start)
             
         scale_g1(_w)
         scale_g3(_w, _I)
