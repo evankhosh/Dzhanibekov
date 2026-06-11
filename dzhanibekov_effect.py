@@ -5,6 +5,7 @@ scene.width = 800
 scene.height = 600
 scene.background = color.black
 scene.userzoom = False
+scene.align = 'left'
 
 metal = vector(0.72, 0.72, 0.75)
 _rho           = .001
@@ -20,7 +21,9 @@ def toggle(b):
     running = not running
     b.text = "Stop" if running else "Start"
 
-scene.append_to_caption("\n")
+scene.append_to_caption("nwfjbkjsgbjkagnjkrajkbgjlkerbgjleragjberjlgbgaejb")
+
+scene.append_to_caption("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n")
 start_btn = button(text="Start", bind=toggle)
 
 '''
@@ -340,6 +343,7 @@ elif y_btn.checked:
 elif z_btn.checked:
     w_txt.text = '{:1.2f}'.format(_w.z)
 scene.append_to_caption(' rad/s')
+scene.append_to_caption("\n\n\n\n")
 
 def reset():
     global running, wingnut, _w, _I, dt, t, _euler_angles, plot_counter, \
