@@ -1,8 +1,8 @@
 Web VPython 3.2
 
 scene.title = "Dzhanibekov Effect"
-scene.width = 800
-scene.height = 600
+scene.width = 600
+scene.height = 400
 scene.background = color.black
 scene.userzoom = False
 scene.align = 'left'
@@ -21,9 +21,33 @@ def toggle(b):
     running = not running
     b.text = "Stop" if running else "Start"
 
-scene.append_to_caption("nwfjbkjsgbjkagnjkrajkbgjlkerbgjleragjberjlgbgaejb")
+scene.append_to_caption('''          Welcome to our simulation of the Dzhanibekov effect!
+          
+          To run the simulation, press
+          the Start button. We also have a button to show/hide the three principal axes about
+          which the wingnut rotates, called Show Principal Axes. Below is a list of simulation
+          parameters that the user can change.
+          
+          - Axis of Rotation : radio buttons; you can choose between x, y, z (by default this
+                                      is y)
+          - Cylinder 1 Length : the length of the vertical cylinder (by default 3 meters)
+          - Cylinder 2 Length : the length of the horizontal cylinder (by default 5 meters)
+          - Angular Velocity : the angular velocity at which the wingnut rotates about the axis
+                                       of rotation (by default 10 radians per second)
 
-scene.append_to_caption("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n")
+          To reset these parameters back to default values, press the Reset button.
+
+          For best effects, stop the simulation while changing parameters (preferably not
+          during a flip) or right after resetting the simulation.
+
+          Under the user input, we have three graphs:
+          
+          - Angular Velocity Components vs Time
+          - Euler Angles vs Time
+          - Angular Momentum Components vs Time
+''')
+
+#scene.append_to_caption("\n\n\n\n\n\n\n\n\n\n\n")
 start_btn = button(text="Start", bind=toggle)
 
 '''
@@ -270,7 +294,7 @@ plot_counter  = 0
 # modify initial conditions
 scene.append_to_caption("   ")
 reset_btn = button(text="Reset", bind=reset)
-scene.append_to_caption("\n\n")
+scene.append_to_caption("\n")
     
 def rotate_about(evt):
     global _w, _I
